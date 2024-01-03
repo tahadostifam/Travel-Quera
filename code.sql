@@ -18,8 +18,11 @@ order by count desc;
 select
 	json_extract_path_text(airport_name, 'en') as airport,
 	model as aircraft_model,
-	count(flight_id),
-	ROW_NUMBER() OVER(ORDER BY count(flight_id) desc) rank
+	count(flight_id) as count,
+	rank() over(
+		partition by json_extract_path_text(airport_name, 'en')
+		order by count(flight_id) desc
+	) as rank
 from (
 	select airport_name, model, public.flights.aircraft_code, ticket_flights.flight_id from public.flights
 	left join public.aircrafts_data on public.flights.aircraft_code=public.aircrafts_data.aircraft_code
@@ -30,4 +33,5 @@ from (
 	where public.flights.status='Arrived'
 )
 group by airport, model
-order by airport, model, rank;
+having count(flight_id) > 0
+order by airport, rank, model;
