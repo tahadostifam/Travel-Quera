@@ -35,3 +35,13 @@ from (
 group by airport, model
 having count(flight_id) > 0
 order by airport, rank, model;
+
+-- Section4
+select
+    json_extract_path_text(a1.city, 'en') as city1,
+    json_extract_path_text(a2.city, 'en') as city2,
+    extract(EPOCH from (cast(f.scheduled_arrival as timestamp) - cast(f.scheduled_departure as timestamp))) as time_dist
+from airports_data a1, flights f, airports_data a2
+where f.arrival_airport = a1.airport_code and f.departure_airport = a2.airport_code
+group by city1, city2, time_dist
+having json_extract_path_text(a1.city, 'en') = 'Moscow' and json_extract_path_text(a2.city, 'en') = 'Petropavlovsk'
