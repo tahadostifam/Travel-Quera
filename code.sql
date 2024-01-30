@@ -1,3 +1,5 @@
+-- github.com/tahadostifam
+
 -- Section1
 select aircraft_code, fare_conditions, count(distinct seat_no) AS count
 FROM public.airports_data
@@ -37,11 +39,14 @@ having count(flight_id) > 0
 order by airport, rank, model;
 
 -- Section4
-select
-    json_extract_path_text(a1.city, 'en') as city1,
-    json_extract_path_text(a2.city, 'en') as city2,
-    extract(EPOCH from (cast(f.scheduled_arrival as timestamp) - cast(f.scheduled_departure as timestamp))) as time_dist
-from airports_data a1, flights f, airports_data a2
-where f.arrival_airport = a1.airport_code and f.departure_airport = a2.airport_code
-group by city1, city2, time_dist
-having json_extract_path_text(a1.city, 'en') = 'Moscow' and json_extract_path_text(a2.city, 'en') = 'Petropavlovsk'
+select city1, city2, extract(hour from time_diff) * 60 + extract(minutes from time_diff) from (
+    SELECT json_extract_path_text(a1.city, 'en') AS city1,
+           json_extract_path_text(a2.city, 'en') AS city2,
+           avg(CAST(f.scheduled_arrival AS TIMESTAMP) - CAST(f.scheduled_departure AS TIMESTAMP)) AS time_diff
+    FROM airports_data a1
+             JOIN flights f ON f.arrival_airport = a1.airport_code
+             JOIN airports_data a2 ON f.departure_airport = a2.airport_code
+    WHERE json_extract_path_text(a1.city, 'en') = 'Moscow'
+      AND json_extract_path_text(a2.city, 'en') = 'Petropavlovsk'
+    GROUP BY city1, city2
+) as time difference_of_cities
